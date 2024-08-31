@@ -2,7 +2,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
 
 def create_user(data):
     try:
@@ -31,3 +32,13 @@ def generate_token(user):
     return refresh
 
 
+def verify_user(username, password):
+    try:
+        
+        user = User.objects.get(username=username)
+        if check_password(password, user.password):
+            return user
+        else:
+            return None
+    except User.DoesNotExist:
+        return None
