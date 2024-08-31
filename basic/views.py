@@ -3,11 +3,12 @@ from django.http import JsonResponse
 from .forms import UserForm
 from .services import create_user,get_all_users
 import json
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
-
-
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(View):
-    
+   
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body.decode('utf-8'))
         form = UserForm(data)
