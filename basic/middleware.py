@@ -2,15 +2,16 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
-EXEMPT_PATHS = ['/admin/', '/basic/login', '/basic/register']  
+EXEMPT_PATHS = ['/admin/', '/basic/login', '/basic/register','/basic/checkToken']  
 
 class JWTAuthenticationMiddleware:
+    
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
        
-
+        print(request)
         if any(request.path_info.startswith(path) for path in EXEMPT_PATHS):
             response = self.get_response(request)
             return response

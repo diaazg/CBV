@@ -5,6 +5,7 @@ from .services import create_user,get_all_users,generate_token,verify_user
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -42,11 +43,11 @@ class LoginView(View):
             if user:
                 token = generate_token(user)
                 token_obj = {
-                    'refresh':str(token),
-                    'access':str(token.access_token)
+                    'username':username,
+                    'token':str(token.access_token)
                 }
 
-                return JsonResponse({'message':token_obj})
+                return JsonResponse(token_obj)
             else:
                 return JsonResponse({'error': 'Wrong credentials'}, status=404)
         else:
@@ -60,6 +61,22 @@ class GetUsersView(View):
           return JsonResponse({'users':response},status=200)      
 
 
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TokenValidationView(View):
+    def get(self, request, *args, **kwargs):
+        auth = JWTAuthentication()
+        try:
+            
+            user_auth_tuple = auth.authenticate(request)
+            if user_auth_tuple is not None:
+                user, token = user_auth_tuple
+                return JsonResponse({'message': 'Token is valid', 'user': user.username}, status=200)
+            else:
+                return JsonResponse({'error': 'Token is invalid or expired'}, status=401)
+        except Exception as e:
+            return JsonResponse({'error': 'Authentication failed', 'details': str(e)}, status=401)
 
 
 

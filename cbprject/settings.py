@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-t_f+r&dr=t43-+&sccoqi%5wqx1re@u8fy#k3s+88(cg+e$4u@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'localhost','192.168.8.116']
 
 
 # Application definition
@@ -97,7 +97,7 @@ WSGI_APPLICATION = "cbprject.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_database',        # Name of the database
+        'NAME': 'django_database',        # Name of the database 
         'USER': 'django_user',            # Your PostgreSQL username
         'PASSWORD': 'django_user',    # Your PostgreSQL password
         'HOST': 'localhost',         # Set to the IP address of the PostgreSQL server
