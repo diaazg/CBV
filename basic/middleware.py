@@ -1,6 +1,8 @@
+from datetime import timezone
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from .models import UserInfo
 
 EXEMPT_PATHS = ['/admin/', '/basic/login', '/basic/register','/basic/checkToken']  
 
@@ -11,7 +13,7 @@ class JWTAuthenticationMiddleware:
 
     def __call__(self, request):
        
-        print(request)
+       
         if any(request.path_info.startswith(path) for path in EXEMPT_PATHS):
             response = self.get_response(request)
             return response
@@ -19,10 +21,17 @@ class JWTAuthenticationMiddleware:
         auth = JWTAuthentication()
         try:
 
-            user_auth_tuple = auth.authenticate(request)
-            if user_auth_tuple is None:
+            user, _ = auth.authenticate(request)
+
+            if user is None:
 
                 return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+            else:
+                               
+                user_info, created = UserInfo.objects.get_or_create(user=user)
+                
+                user_info.last_date_connected = timezone.now()
+                user_info.save()
         except (InvalidToken, TokenError) as e:
       
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
