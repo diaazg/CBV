@@ -102,31 +102,27 @@ class FriendshipView(View):
 
     def put(self, request, *args, **kwargs):
         data = json.loads(request.body.decode('utf-8'))
-        form = FriendshipForm(data)
-        if form.is_valid():
-            try:
-             accept_friend_ship(form.cleaned_data)
-             return JsonResponse(status=200)
-            except Exception as e :
+        try:
+             accept_friend_ship(data)
+             return JsonResponse({'message':'success'},status=200)
+        except Exception as e :
                      return JsonResponse({'errors': 'An error occurred'}, status=500)                
                     
-        else:
-                return JsonResponse({'errors': form.errors}, status=400)
+
         
 
 
     def delete(self, request, *args, **kwargs):   
-        data = json.loads(request.body.decode('utf-8'))
-        form = FriendshipForm(data)
-        if form.is_valid(): 
+            data = json.loads(request.body.decode('utf-8'))
+       
+        
             try:
-             refuse_friend_ship(form.cleaned_data)
-             return JsonResponse(status=200)
+             refuse_friend_ship(data)
+             return JsonResponse({'message':'success'},status=200)
             except Exception as e :
                      return JsonResponse({'errors': 'An error occurred'}, status=500)                
                     
-        else:
-                return JsonResponse({'errors': form.errors}, status=400)
+
 
 
     def get(self, request, *args, **kwargs):

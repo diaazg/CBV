@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from .models import UserInfo,Friendship
-from datetime import timezone
+from django.utils import timezone
 
 def create_user(data):
     try:
@@ -76,13 +76,13 @@ def create_friend_ship(data):
 
 def accept_friend_ship(data):
         try:
-          senderID = data['sender']
-          receiverID = data['receiver']
-          sender = User.objects.get(id=senderID)
-          receiver = User.objects.get(id=receiverID)
-          if sender and receiver :
-               friendship = Friendship.objects.create(sender=sender,receiver=receiver)
+               sid = data['sender']
+               rid = data['receiver']
+               receiver = User.objects.get(id=rid)
+               sender = User.objects.get(id=sid)
+               friendship = Friendship.objects.get(sender=sender,receiver=receiver)
                friendship.accepted = True
+               
                friendship.last_connection = timezone.now()
                friendship.save()
         except Exception as e :
@@ -92,12 +92,11 @@ def accept_friend_ship(data):
 
 def refuse_friend_ship(data):
         try:
-          senderID = data['sender']
-          receiverID = data['receiver']
-          sender = User.objects.get(id=senderID)
-          receiver = User.objects.get(id=receiverID)
-          if sender and receiver :
-               friendship = Friendship.objects.create(sender=sender,receiver=receiver)
+               sid = data['sender']
+               rid = data['receiver']
+               receiver = User.objects.get(id=rid)
+               sender = User.objects.get(id=sid)
+               friendship = Friendship.objects.get(sender=sender,receiver=receiver,accepted=False)
                friendship.delete()
         except Exception as e :
              raise ValidationError(e)   
