@@ -1,10 +1,11 @@
-from datetime import timezone
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .models import UserInfo
+from .services import update_last_connected_date
 
-EXEMPT_PATHS = ['/admin/', '/basic/login', '/basic/register','/basic/checkToken']  
+
+EXEMPT_PATHS = ['/admin/', '/basic/login', '/basic/register','/basic/checkToken','/basic/friendship']  
 
 class JWTAuthenticationMiddleware:
     
@@ -27,11 +28,9 @@ class JWTAuthenticationMiddleware:
 
                 return JsonResponse({'error': 'Invalid or missing token'}, status=401)
             else:
-                               
-                user_info, created = UserInfo.objects.get_or_create(user=user)
-                
-                user_info.last_date_connected = timezone.now()
-                user_info.save()
+
+               update_last_connected_date(user=user)                
+               
         except (InvalidToken, TokenError) as e:
       
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)

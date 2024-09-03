@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "basic",
     'phonenumber_field',
     'rest_framework',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -90,6 +91,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "cbprject.wsgi.application"
+ASGI_APPLICATION = 'cbprject.asgi.application'
 
 
 # Database

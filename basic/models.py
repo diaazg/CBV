@@ -43,6 +43,8 @@ class Friendship(models.Model):
     sender = models.ForeignKey(User, related_name='sent_friend_requests', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_friend_requests', on_delete=models.CASCADE)
     send_time = models.DateTimeField(auto_now_add=True)
+    last_connection = models.DateTimeField(null=True,blank=True)
+    accepted = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('sender', 'receiver')
@@ -58,3 +60,9 @@ class Story(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username}'s Story"
+
+class Room(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name

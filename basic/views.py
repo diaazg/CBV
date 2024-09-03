@@ -1,7 +1,7 @@
 from django.views import View
 from django.http import JsonResponse
-from .forms import UserRegisterForm,UserLoginForm
-from .services import create_user,get_all_users,generate_token,verify_user
+from .forms import *
+from .services import *
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -78,6 +78,77 @@ class TokenValidationView(View):
         except Exception as e:
             return JsonResponse({'error': 'Authentication failed', 'details': str(e)}, status=401)
 
+
+@method_decorator(csrf_exempt, name='dispatch')
+class FriendshipView(View):
+
+
+    def post(self, request, *args, **kwargs):
+            data = json.loads(request.body.decode('utf-8'))
+            form = FriendshipForm(data)
+            
+            if form.is_valid():
+                try:
+                     create_friend_ship(form.cleaned_data)
+                    
+                     return JsonResponse({'message':"success"},status=200)    
+                except Exception as e :
+                     return JsonResponse({'errors': 'An error occurred'}, status=500)                
+                    
+            else:
+                return JsonResponse({'errors': form.errors}, status=400)
+    
+
+
+    def put(self, request, *args, **kwargs):
+        data = json.loads(request.body.decode('utf-8'))
+        form = FriendshipForm(data)
+        if form.is_valid():
+            try:
+             accept_friend_ship(form.cleaned_data)
+             return JsonResponse(status=200)
+            except Exception as e :
+                     return JsonResponse({'errors': 'An error occurred'}, status=500)                
+                    
+        else:
+                return JsonResponse({'errors': form.errors}, status=400)
+        
+
+
+    def delete(self, request, *args, **kwargs):   
+        data = json.loads(request.body.decode('utf-8'))
+        form = FriendshipForm(data)
+        if form.is_valid(): 
+            try:
+             refuse_friend_ship(form.cleaned_data)
+             return JsonResponse(status=200)
+            except Exception as e :
+                     return JsonResponse({'errors': 'An error occurred'}, status=500)                
+                    
+        else:
+                return JsonResponse({'errors': form.errors}, status=400)
+
+
+    def get(self, request, *args, **kwargs):
+       try: 
+         data = json.loads(request.body.decode('utf-8'))
+         uid = data.get('uid')
+         if not uid:
+            raise ValueError("User ID (uid) is required.")
+         invitations = get_user_invitaions(data)
+         if isinstance(invitations, str):
+            return JsonResponse({'error': invitations}, status=400)
+         if not invitations.exists():
+            return JsonResponse({'invitations': []}, status=200)
+         invitations_data = [{
+            'sender': invitation.sender.id,
+            'send_time': invitation.send_time,
+            
+         } for invitation in invitations]
+        
+         return JsonResponse({'invitations': invitations_data}, status=200)
+       except Exception as e: 
+           return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
 
 
 

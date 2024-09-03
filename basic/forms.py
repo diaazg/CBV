@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from .models import Friendship
 
 class UserRegisterForm(forms.ModelForm):
 
@@ -22,7 +23,11 @@ class UserLoginForm(forms.Form): ## use forms.Form if we don't want to check Mod
            return username
 
 
-       
+class FriendshipForm(forms.ModelForm):
+
+    class Meta:
+        model =   Friendship
+        fields = '__all__'     
 
 
 
