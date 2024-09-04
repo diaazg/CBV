@@ -27,12 +27,13 @@ SECRET_KEY = "django-insecure-t_f+r&dr=t43-+&sccoqi%5wqx1re@u8fy#k3s+88(cg+e$4u@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'localhost','192.168.8.116']
+ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'localhost','192.168.8.116','192.168.8.104']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'rest_framework',
     'channels',
+    
 ]
 
 MIDDLEWARE = [
@@ -59,7 +61,7 @@ MIDDLEWARE = [
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -91,7 +93,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "cbprject.wsgi.application"
-ASGI_APPLICATION = 'cbprject.asgi.application'
+ASGI_APPLICATION = "cbprject.asgi.application"
 
 
 # Database
@@ -108,6 +110,11 @@ DATABASES = {
     }
 }
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

@@ -1,5 +1,7 @@
-from django.urls import path, include
+from django.urls import path, include,re_path
 from .views import *
+from .consumers import  DirectChatConsumer
+
 
 
 
@@ -11,6 +13,7 @@ urlpatterns = [
     path('checkToken',TokenValidationView.as_view()),
     path('invitation',InvitationView.as_view()),
     path('friend',FriendView.as_view()),
+    re_path(r'ws/chat/(?P<room_name>\w+)/$', DirectChatConsumer.as_asgi()),  
 
     
     
