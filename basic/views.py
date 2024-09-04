@@ -80,16 +80,16 @@ class TokenValidationView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class FriendshipView(View):
+class InvitationView(View):
 
 
     def post(self, request, *args, **kwargs):
             data = json.loads(request.body.decode('utf-8'))
-            form = FriendshipForm(data)
+            form = InvitationForm(data)
             
             if form.is_valid():
                 try:
-                     create_friend_ship(form.cleaned_data)
+                     create_invitation(form.cleaned_data)
                     
                      return JsonResponse({'message':"success"},status=200)    
                 except Exception as e :
@@ -101,12 +101,17 @@ class FriendshipView(View):
 
 
     def put(self, request, *args, **kwargs):
-        data = json.loads(request.body.decode('utf-8'))
-        try:
-             accept_friend_ship(data)
+          data = json.loads(request.body.decode('utf-8'))
+        
+          try:
+             
+             accept_invitation(data)
              return JsonResponse({'message':'success'},status=200)
-        except Exception as e :
-                     return JsonResponse({'errors': 'An error occurred'}, status=500)                
+          except Exception as e :
+                     return JsonResponse({'errors': 'An error occurred'}, status=500)   
+        
+ 
+
                     
 
         
@@ -117,7 +122,7 @@ class FriendshipView(View):
        
         
             try:
-             refuse_friend_ship(data)
+             refuse_invitation(data)
              return JsonResponse({'message':'success'},status=200)
             except Exception as e :
                      return JsonResponse({'errors': 'An error occurred'}, status=500)                

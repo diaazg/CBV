@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
-from .models import UserInfo,Friendship
+from .models import *
 from django.utils import timezone
 
 def create_user(data):
@@ -57,13 +57,13 @@ def update_last_connected_date(user):
 
 
 
-def create_friend_ship(data):
+def create_invitation(data):
      try:
           sender = data['sender']
           receiver = data['receiver'] 
           
          
-          Friendship.objects.create(sender=sender,receiver=receiver)   
+          Invitation.objects.create(sender=sender,receiver=receiver)   
 
 
 
@@ -74,30 +74,28 @@ def create_friend_ship(data):
 
 
 
-def accept_friend_ship(data):
+def accept_invitation(data):
         try:
                sid = data['sender']
                rid = data['receiver']
                receiver = User.objects.get(id=rid)
                sender = User.objects.get(id=sid)
-               friendship = Friendship.objects.get(sender=sender,receiver=receiver)
-               friendship.accepted = True
-               
-               friendship.last_connection = timezone.now()
-               friendship.save()
+               Invitation.objects.get(sender=sender,receiver=receiver).delete()
+               Friend.objects.create(sender=sender,receiver=receiver)
+
         except Exception as e :
              raise ValidationError(e)   
 
 
 
-def refuse_friend_ship(data):
+def refuse_invitation(data):
         try:
                sid = data['sender']
                rid = data['receiver']
                receiver = User.objects.get(id=rid)
                sender = User.objects.get(id=sid)
-               friendship = Friendship.objects.get(sender=sender,receiver=receiver,accepted=False)
-               friendship.delete()
+               invitation = Invitation.objects.get(sender=sender,receiver=receiver)
+               invitation.delete()
         except Exception as e :
              raise ValidationError(e)   
      
@@ -106,7 +104,7 @@ def get_user_invitaions(data):
       try:
         uid = data['uid']
         receiver = User.objects.get(id=uid)
-        invitations = Friendship.objects.filter(receiver=receiver).order_by('send_time')
+        invitations = Invitation.objects.filter(receiver=receiver).order_by('send_time')
         return invitations
       except User.DoesNotExist:
         return "User not found."

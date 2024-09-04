@@ -10,6 +10,7 @@ class UserInfo(models.Model):
     last_date_connected = models.DateTimeField()
     last_date_inv = models.DateTimeField(null=True, blank=True)
 
+
     def save(self, *args, **kwargs):
         if not self.pk:  # Object is being created
             self.last_date_connected = timezone.now()
@@ -39,18 +40,29 @@ class Message(models.Model):
         return f"From {self.sender.username} to {self.receiver.username}: {self.content[:50]}"
 
 
-class Friendship(models.Model):
+class Invitation(models.Model):
     sender = models.ForeignKey(User, related_name='sent_friend_requests', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_friend_requests', on_delete=models.CASCADE)
     send_time = models.DateTimeField(auto_now_add=True)
-    last_connection = models.DateTimeField(null=True,blank=True)
-    accepted = models.BooleanField(default=False)
+
 
     class Meta:
         unique_together = ('sender', 'receiver')
 
     def __str__(self) -> str:
         return f"Friendship request from {self.sender.username} to {self.receiver.username}"
+
+
+class Friend(models.Model):
+    sender = models.ForeignKey(User, related_name='sender_friend', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='receiver_friend', on_delete=models.CASCADE)
+    accept_time = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = ('sender', 'receiver')
+
+    def __str__(self) -> str:
+        return f"Friendship request from {self.sender.username} to {self.receiver.username}"
+    
 
 
 class Story(models.Model):
