@@ -78,10 +78,12 @@ def accept_invitation(data):
         try:
                sid = data['sender']
                rid = data['receiver']
+               room = f'{sid}_{rid}'
                receiver = User.objects.get(id=rid)
                sender = User.objects.get(id=sid)
                Invitation.objects.get(sender=sender,receiver=receiver).delete()
                Friend.objects.create(sender=sender,receiver=receiver)
+               Room.objects.create(name=room)
 
         except Exception as e :
              raise ValidationError(e)   
@@ -100,9 +102,9 @@ def refuse_invitation(data):
              raise ValidationError(e)   
      
 
-def get_user_invitaions(data):
+def get_user_invitaions(uid):
       try:
-        uid = data['uid']
+        
         receiver = User.objects.get(id=uid)
         invitations = Invitation.objects.filter(receiver=receiver).order_by('send_time')
         return invitations
@@ -114,5 +116,22 @@ def get_user_invitaions(data):
            return e
 
                
+
+
+def get_user_friends(uid):
+      try:
+        
+        receiver = User.objects.get(id=uid)
+        
+        friends = Friend.objects.filter(receiver=receiver).order_by('accept_time')
+        
+        return friends
+      except User.DoesNotExist:
+        return "User not found."
+      except ValueError as ve:
+        print(ve)
+        return str(ve)
+      except Exception as e:
+           return e
      
      

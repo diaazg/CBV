@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Invitation
+from .models import *
 
 class UserRegisterForm(forms.ModelForm):
 
@@ -27,7 +27,14 @@ class InvitationForm(forms.ModelForm):
 
     class Meta:
         model =   Invitation
-        fields = '__all__'     
+        fields = '__all__'  
+
+class MessageForm(forms.ModelForm):
+      
+      class Meta:
+        model =   Message
+        fields = '__all__'  
+               
 
 
 

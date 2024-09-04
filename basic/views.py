@@ -112,11 +112,6 @@ class InvitationView(View):
         
  
 
-                    
-
-        
-
-
     def delete(self, request, *args, **kwargs):   
             data = json.loads(request.body.decode('utf-8'))
        
@@ -136,7 +131,7 @@ class InvitationView(View):
          uid = data.get('uid')
          if not uid:
             raise ValueError("User ID (uid) is required.")
-         invitations = get_user_invitaions(data)
+         invitations = get_user_invitaions(uid)
          if isinstance(invitations, str):
             return JsonResponse({'error': invitations}, status=400)
          if not invitations.exists():
@@ -150,6 +145,45 @@ class InvitationView(View):
          return JsonResponse({'invitations': invitations_data}, status=200)
        except Exception as e: 
            return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
+
+
+
+
+class FriendView(View):
+
+    def get(self, request, *args, **kwargs):
+       try: 
+         data = json.loads(request.body.decode('utf-8'))
+         uid = data.get('uid')
+         if not uid:
+            raise ValueError("User ID (uid) is required.")
+         friends = get_user_friends(uid)
+         if isinstance(friends, str):
+            return JsonResponse({'error': friends}, status=400)
+         
+         if not friends.exists():
+            return JsonResponse({'friends': []}, status=200)
+         friends_data = [{
+            'friend': friend.sender.id,
+            'accept_time': friend.accept_time,
+            
+         } for friend in friends]
+        
+         return JsonResponse({'friends': friends_data}, status=200)
+       except Exception as e: 
+           return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
+
+
+
+class MessageView(View):
+    
+    
+    def get(self, request, *args, **kwargs):
+            data = json.loads(request.body.decode('utf-8'))
+ 
+
+
+
 
 
 

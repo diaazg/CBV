@@ -9,7 +9,9 @@ urlpatterns = [
     path('login', LoginView.as_view(),name='login'),
     path('getall', GetUsersView.as_view(),name='get_all'),
     path('checkToken',TokenValidationView.as_view()),
-    path('invitation',InvitationView.as_view())
+    path('invitation',InvitationView.as_view()),
+    path('friend',FriendView.as_view()),
+
     
     
 ]
