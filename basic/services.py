@@ -126,8 +126,19 @@ def get_user_friends(uid):
         receiver = User.objects.get(id=uid)
         
         friends = Friend.objects.filter(receiver=receiver).order_by('accept_time')
+        friends_list = []
+        for friend in friends:
+             friend_name = User.objects.get(id=uid).username
+             obj = {
+                 'friend_id': friend.sender.id,
+                 'friend_name':friend_name,
+                 'accept_time': friend.accept_time,
+
+             }
+             friends_list.append(obj)
+           
         
-        return friends
+        return friends_list
       except User.DoesNotExist:
         return "User not found."
       except ValueError as ve:

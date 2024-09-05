@@ -161,15 +161,11 @@ class FriendView(View):
          if isinstance(friends, str):
             return JsonResponse({'error': friends}, status=400)
          
-         if not friends.exists():
+         if friends==[]:
             return JsonResponse({'friends': []}, status=200)
-         friends_data = [{
-            'friend': friend.sender.id,
-            'accept_time': friend.accept_time,
-            
-         } for friend in friends]
+         
         
-         return JsonResponse({'friends': friends_data}, status=200)
+         return JsonResponse({'friends': friends}, status=200)
        except Exception as e: 
            return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
 
@@ -179,7 +175,7 @@ class MessageView(View):
     
     
     def get(self, request, *args, **kwargs):
-        print('-----------------')
+        
         try:
 
             data = json.loads(request.body.decode('utf-8'))
