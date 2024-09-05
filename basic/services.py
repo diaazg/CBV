@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import check_password
 from .models import *
 from django.utils import timezone
 from django.db.models import Q
+from datetime import datetime
 
 def create_user(data):
     try:
@@ -137,16 +138,30 @@ def get_user_friends(uid):
      
 
 
-def get_chat_messages(sender_id,receiver_id):
+def get_chat_messages(sender_id,receiver_id,get_new):
 
       try:   
   
            sender = User.objects.get(id=sender_id)
            receiver = User.objects.get(id=receiver_id)
-
-           messages = Message.objects.filter(
-                  (Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender))
+           
+           if get_new is None :
+              messages = Message.objects.filter(
+                  (
+                       Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+                          )
                    ).order_by('-date_time')[:20]
+
+           else:
+              parsed_date = datetime.strptime(get_new, '%Y-%m-%dT%H:%M:%SZ')
+              messages = Message.objects.filter(
+                  (
+                       ( Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender) )
+                       & 
+                       Q(date_time__lt=parsed_date)
+                       )
+                   ).order_by('-date_time')[:20]
+
            return messages
       
 

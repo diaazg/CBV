@@ -179,14 +179,21 @@ class MessageView(View):
     
     
     def get(self, request, *args, **kwargs):
-            
+        print('-----------------')
         try:
 
             data = json.loads(request.body.decode('utf-8'))
             sender_id = data.get('sender_id')
             receiver_id = data.get('receiver_id')
+            min_date_time = data.get('min_date_time')
 
-            messages = get_chat_messages(sender_id,receiver_id)
+            if min_date_time is None:
+             messages = get_chat_messages(sender_id,receiver_id,None)
+            
+            else:
+                
+                messages = get_chat_messages(sender_id,receiver_id,min_date_time)
+               
 
             if isinstance(messages, str):
              return JsonResponse({'error': messages}, status=400)
@@ -208,7 +215,7 @@ class MessageView(View):
         except Exception as e: 
            return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
 
- 
+   
 
 
 
