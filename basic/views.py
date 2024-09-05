@@ -179,7 +179,35 @@ class MessageView(View):
     
     
     def get(self, request, *args, **kwargs):
+            
+        try:
+
             data = json.loads(request.body.decode('utf-8'))
+            sender_id = data.get('sender_id')
+            receiver_id = data.get('receiver_id')
+
+            messages = get_chat_messages(sender_id,receiver_id)
+
+            if isinstance(messages, str):
+             return JsonResponse({'error': messages}, status=400)
+            if not messages.exists():
+              return JsonResponse({'messages': []}, status=200)
+            
+            messages_data = [{
+                'date_time':message.date_time,
+                'message_id':message.id,
+                'sender': message.sender_id,
+                'receiver':message.receiver_id,
+                'message': message.content,
+            
+             } for message in messages]
+            
+            return JsonResponse({'messages': messages_data}, status=200)
+        
+        
+        except Exception as e: 
+           return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
+
  
 
 

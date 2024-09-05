@@ -6,7 +6,7 @@ from .services import update_last_connected_date
 
 
 EXEMPT_PATHS = ['/admin/', '/basic/login', '/basic/register',
-                '/basic/checkToken','/basic/invitation','/basic/friend','/ws/chat/']  
+                '/basic/checkToken','/basic/invitation','/basic/friend','/ws/chat/','/basic/message']  
 
 class JWTAuthenticationMiddleware:
     

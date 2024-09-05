@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from .models import *
 from django.utils import timezone
+from django.db.models import Q
 
 def create_user(data):
     try:
@@ -129,9 +130,30 @@ def get_user_friends(uid):
       except User.DoesNotExist:
         return "User not found."
       except ValueError as ve:
-        print(ve)
+
         return str(ve)
       except Exception as e:
            return e
      
-     
+
+
+def get_chat_messages(sender_id,receiver_id):
+
+      try:   
+  
+           sender = User.objects.get(id=sender_id)
+           receiver = User.objects.get(id=receiver_id)
+
+           messages = Message.objects.filter(
+                  (Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender))
+                   ).order_by('-date_time')[:20]
+           return messages
+      
+
+      except User.DoesNotExist:
+        return "User not found."
+      except ValueError as ve:
+        return str(ve)
+      except Exception as e:
+           return e
+
