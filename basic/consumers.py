@@ -1,5 +1,6 @@
 # consumers.py
 
+from datetime import datetime
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
@@ -13,9 +14,11 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'direct_chat_{self.room_name}'
 
-        room_exists = await self.room_exists(self.room_name)
-        if room_exists:
-            print('eeeeeeeeeeeeeeeeeeeeeee')
+        room_exists_obj = await self.room_exists(self.room_name)
+        exist = room_exists_obj['exist']
+        room_name = room_exists_obj['value']
+        if exist:
+            self.room_group_name = f'direct_chat_{room_name}'
             await self.channel_layer.group_add(
                 self.room_group_name,
                 self.channel_name
@@ -46,7 +49,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         sender_id = text_data_json['sender_id']
         receiver_id = text_data_json['receiver_id']
-        print(message)
+        print(text_data_json)
         sender = await sync_to_async(User.objects.get)(id=sender_id)
         receiver = await sync_to_async(User.objects.get)(id=receiver_id)
 
@@ -61,8 +64,8 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'chat_message',
                 'message': created_message.content,
-                'sender': sender.username,
-                'receiver': receiver.username,
+                'sender': sender.id,
+                'receiver': receiver.id,
                 'message_id': created_message.id,
                 'date_time': created_message.date_time
             }
@@ -89,7 +92,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         receiver = event['receiver']
         message_id = event.get('message_id')
         date_time = event['date_time']
-
+        if isinstance(date_time, datetime):
+         date_time = date_time.isoformat() 
+        
         await self.send(text_data=json.dumps({
             'message': message,
             'sender': sender,
@@ -113,19 +118,19 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         print('--------------------------')
         if Room.objects.filter(name=room_name).exists():
             
-            return True
+            return {'exist':True,'value':room_name}
         else:
             user_ids = self.room_name.split('_')
             if len(user_ids) == 2:
                 user1_id, user2_id = user_ids
                 new_name = f'{user2_id}_{user1_id}'
-                print('fffffffffffffffffffff')
-                print(new_name)
-                return Room.objects.filter(name=new_name).exists()
+                exist = Room.objects.filter(name=new_name).exists()
+                
+                return  {'exist':exist,'value':new_name}
                  
             else:
                 print('hhhhhhhhhhhhhhhhhhhhhhhhhhh')
-                return False
+                return  {'exist':False,'value':''}
 
     @database_sync_to_async
     def delete_message(self, message_id):
