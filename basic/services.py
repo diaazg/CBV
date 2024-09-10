@@ -14,8 +14,22 @@ def create_user(data):
         username = data['username']
         email = data['email']
         password = data['password']
+        phone_number = data['phone_number']
+        profile_title = data['profile_title']
         user = User.objects.create_user(username=username, password=password, email=email)
-        return user
+        user_info = UserInfo.objects.create(user=user,phone_number=phone_number)
+        user_profile = Profile.objects.create(user=user,title=profile_title)
+        uid = user.id
+        info_obj = {
+             'uid':uid,
+             'username':username,
+             'email':email,
+             'password':password,
+             'phone_number':phone_number,
+              'profile_title':profile_title
+
+        }
+        return info_obj , user
     except ValidationError as e:
         
         raise e

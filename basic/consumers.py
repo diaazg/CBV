@@ -49,7 +49,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         sender_id = text_data_json['sender_id']
         receiver_id = text_data_json['receiver_id']
-        print(text_data_json)
+    
         sender = await sync_to_async(User.objects.get)(id=sender_id)
         receiver = await sync_to_async(User.objects.get)(id=receiver_id)
 

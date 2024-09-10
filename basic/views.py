@@ -13,17 +13,22 @@ class RegisterView(View):
    
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body.decode('utf-8'))
+        print(data)
         form = UserRegisterForm(data)
         if form.is_valid():
             try:
-                user  =   create_user(form.cleaned_data)
+                info_obj , user  =   create_user(form.cleaned_data)
                 token = generate_token(user)
                 token_obj = {
                     'refresh':str(token),
                     'access':str(token.access_token)
                 }
 
-                return JsonResponse({'message':token_obj})
+
+                return JsonResponse({
+                    'token_obj':token_obj,
+                    'user_info':info_obj
+                                     })
             except Exception as e:
                 return JsonResponse({'errors': 'An error occurred'}, status=500)
             

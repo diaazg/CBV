@@ -2,11 +2,16 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import *
 
-class UserRegisterForm(forms.ModelForm):
+class UserRegisterForm(forms.Form):
+      
+        username = forms.CharField(max_length=150,required=True)
+        password = forms.CharField(min_length=5)
+        email = forms.EmailField()
+        phone_number = forms.CharField(max_length=12,min_length=12)
+        profile_title = forms.CharField(max_length=120)
 
-    class Meta:
-        model = User
-        fields = ['username','email','password']
+     
+      
 
 
 class UserLoginForm(forms.Form): ## use forms.Form if we don't want to check Model in db

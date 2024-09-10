@@ -12,7 +12,7 @@ class UserInfo(models.Model):
 
 
     def save(self, *args, **kwargs):
-        if not self.pk:  # Object is being created
+        if not self.pk: 
             self.last_date_connected = timezone.now()
         super().save(*args, **kwargs)
 
