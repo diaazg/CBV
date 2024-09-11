@@ -56,11 +56,24 @@ def verify_user(username, password):
         
         user = User.objects.get(username=username)
         if check_password(password, user.password):
-            return user
+            user_info = UserInfo.objects.get(user=user)
+            user_profile = Profile.objects.get(user=user)
+           
+            uid = user.id
+            info_obj = {
+             'uid':uid,
+             'username':username,
+             'email':user.email,
+             'password':password,
+             'phone_number':str(user_info.phone_number),
+              'profile_title':user_profile.title
+
+               }
+            return info_obj,user 
         else:
-            return None
+            return None,None
     except User.DoesNotExist:
-        return None
+        return None,None
     
 
 def update_last_connected_date(user):

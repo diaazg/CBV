@@ -44,15 +44,18 @@ class LoginView(View):
         if form.is_valid():
             username = data['username']
             password = data['password']
-            user = verify_user(username=username,password=password)
+            info_obj,user  = verify_user(username=username,password=password)
             if user:
                 token = generate_token(user)
                 token_obj = {
-                    'username':username,
-                    'token':str(token.access_token)
+                    'refresh':str(token),
+                    'access':str(token.access_token)
                 }
 
-                return JsonResponse(token_obj)
+                return JsonResponse({
+                    'token_obj':token_obj,
+                    'user_info':info_obj
+                                     })
             else:
                 return JsonResponse({'error': 'Wrong credentials'}, status=404)
         else:
