@@ -145,7 +145,7 @@ class InvitationView(View):
          if not invitations.exists():
             return JsonResponse({'invitations': []}, status=200)
          invitations_data = [{
-            'sender': invitation.sender.id,
+            'sid': invitation.sender.id,
             'send_time': invitation.send_time,
             
          } for invitation in invitations]
@@ -163,17 +163,22 @@ class FriendView(View):
        try: 
          data = json.loads(request.body.decode('utf-8'))
          uid = data.get('uid')
+         friend = data.get('friend')
          if not uid:
             raise ValueError("User ID (uid) is required.")
-         friends = get_user_friends(uid)
-         if isinstance(friends, str):
-            return JsonResponse({'error': friends}, status=400)
+         if friend == True:
+             list = get_user_friends(uid)
+         else:
+             list = get_peoples(uid)
+
+         if isinstance(list, str):
+            return JsonResponse({'error': list}, status=400)
          
-         if friends==[]:
-            return JsonResponse({'friends': []}, status=200)
+         if list==[]:
+            return JsonResponse({'list': []}, status=200)
          
         
-         return JsonResponse({'friends': friends}, status=200)
+         return JsonResponse({'list': list}, status=200)
        except Exception as e: 
            return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
 

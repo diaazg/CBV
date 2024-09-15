@@ -176,6 +176,43 @@ def get_user_friends(uid):
      
 
 
+def get_peoples(uid):
+      try:
+        friends = Friend.objects.filter(Q(sender_id=uid) | Q(receiver_id=uid))
+        invitations = Invitation.objects.filter(Q(sender_id=uid) | Q(receiver_id=uid))
+        friend_ids = friends.values_list('sender_id', 'receiver_id')
+        invitation_ids = invitations.values_list('sender_id', 'receiver_id')
+        excluded_ids = set(
+                            list(friend_ids.values_list(flat=True)) + 
+                            list(invitation_ids.values_list("sender_id",flat=True)) +
+                            list(invitation_ids.values_list("receiver_id",flat=True))
+                            )
+      
+
+        peoples = User.objects.exclude(id__in=excluded_ids)
+        
+        
+        peoples_list = []
+        for person in peoples:
+             
+             obj = {
+                 'uid': person.id,
+                 'username':person.username,
+             }
+             peoples_list.append(obj)
+           
+        
+        return peoples_list
+      except User.DoesNotExist:
+        return "User not found."
+      except ValueError as ve:
+
+        return str(ve)
+      except Exception as e:
+           return e     
+
+
+
 def get_chat_messages(sender_id,receiver_id,get_new):
 
       try:   
