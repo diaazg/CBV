@@ -98,7 +98,7 @@ class InvitationView(View):
             if form.is_valid():
                 try:
                      create_invitation(form.cleaned_data)
-                    
+                      
                      return JsonResponse({'message':"success"},status=200)    
                 except Exception as e :
                      return JsonResponse({'errors': 'An error occurred'}, status=500)                
@@ -110,12 +110,13 @@ class InvitationView(View):
 
     def put(self, request, *args, **kwargs):
           data = json.loads(request.body.decode('utf-8'))
-        
+          print(data)
           try:
              
              accept_invitation(data)
              return JsonResponse({'message':'success'},status=200)
           except Exception as e :
+                     print(e)
                      return JsonResponse({'errors': 'An error occurred'}, status=500)   
         
  
@@ -137,19 +138,23 @@ class InvitationView(View):
        try: 
          data = json.loads(request.body.decode('utf-8'))
          uid = data.get('uid')
+        
          if not uid:
             raise ValueError("User ID (uid) is required.")
          invitations = get_user_invitaions(uid)
          if isinstance(invitations, str):
             return JsonResponse({'error': invitations}, status=400)
          if not invitations.exists():
+            
             return JsonResponse({'invitations': []}, status=200)
+         
          invitations_data = [{
             'sid': invitation.sender.id,
             'send_time': invitation.send_time,
             
          } for invitation in invitations]
-        
+         print("invitations---------------------------")
+         print(invitations_data)
          return JsonResponse({'invitations': invitations_data}, status=200)
        except Exception as e: 
            return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 

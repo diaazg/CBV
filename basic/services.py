@@ -107,9 +107,13 @@ def accept_invitation(data):
         try:
                sid = data['sender']
                rid = data['receiver']
+               print(sid)
+               print(rid)
                room = f'{sid}_{rid}'
                receiver = User.objects.get(id=rid)
                sender = User.objects.get(id=sid)
+               inv = Invitation.objects.get(sender=sender,receiver=receiver)
+               print(inv)
                Invitation.objects.get(sender=sender,receiver=receiver).delete()
                Friend.objects.create(sender=sender,receiver=receiver)
                Room.objects.create(name=room)
@@ -150,15 +154,19 @@ def get_user_invitaions(uid):
 def get_user_friends(uid):
       try:
         
-        receiver = User.objects.get(id=uid)
+        user = User.objects.get(id=uid)
         
-        friends = Friend.objects.filter(receiver=receiver).order_by('accept_time')
+        friends = Friend.objects.filter(Q(receiver=user)|Q(sender=user)).order_by('accept_time')
+        
         friends_list = []
         for friend in friends:
-             friend_name = User.objects.get(id=uid).username
+             if(friend.sender == user):
+                 my_friend = friend.receiver
+             else:  
+                 my_friend = friend.sender
              obj = {
-                 'friend_id': friend.sender.id,
-                 'friend_name':friend_name,
+                 'friend_id': my_friend.id,
+                 'friend_name':my_friend.username,
                  'accept_time': friend.accept_time,
 
              }
@@ -183,11 +191,12 @@ def get_peoples(uid):
         friend_ids = friends.values_list('sender_id', 'receiver_id')
         invitation_ids = invitations.values_list('sender_id', 'receiver_id')
         excluded_ids = set(
-                            list(friend_ids.values_list(flat=True)) + 
+                            list(friend_ids.values_list('sender_id',flat=True)) +
+                            list(friend_ids.values_list('receiver_id',flat=True)) + 
                             list(invitation_ids.values_list("sender_id",flat=True)) +
                             list(invitation_ids.values_list("receiver_id",flat=True))
                             )
-      
+        print(excluded_ids)
 
         peoples = User.objects.exclude(id__in=excluded_ids)
         
