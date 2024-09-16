@@ -107,13 +107,11 @@ def accept_invitation(data):
         try:
                sid = data['sender']
                rid = data['receiver']
-               print(sid)
-               print(rid)
                room = f'{sid}_{rid}'
                receiver = User.objects.get(id=rid)
                sender = User.objects.get(id=sid)
-               inv = Invitation.objects.get(sender=sender,receiver=receiver)
-               print(inv)
+               
+
                Invitation.objects.get(sender=sender,receiver=receiver).delete()
                Friend.objects.create(sender=sender,receiver=receiver)
                Room.objects.create(name=room)

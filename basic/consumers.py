@@ -8,6 +8,8 @@ from .models import Message, Room
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
+import base64
+from django.core.files.base import ContentFile
 
 class DirectChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -36,6 +38,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
+     
         text_data_json = json.loads(text_data)
         action = text_data_json.get('action', 'send')
 
@@ -44,12 +47,19 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             await self.handle_send_message(text_data_json)
         elif action == 'delete':
             await self.handle_delete_message(text_data_json)
+ 
+        else:
+          await self.handle_audio_message(text_data)
+
 
     async def handle_send_message(self, text_data_json):
-        message = text_data_json['message']
+        
         sender_id = text_data_json['sender_id']
         receiver_id = text_data_json['receiver_id']
-        print(message)
+        text_content = text_data_json["message"]
+        message_type = 'text'
+
+        
     
         sender = await sync_to_async(User.objects.get)(id=sender_id)
         receiver = await sync_to_async(User.objects.get)(id=receiver_id)
@@ -57,14 +67,16 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         created_message = await sync_to_async(Message.objects.create)(
             sender=sender,
             receiver=receiver,
-            content=message,
+            text_content=text_content,
+            message_type=message_type
         )
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': created_message.content,
+                'text_content': created_message.text_content,
+                'audio_file':'',
                 'sender': sender.id,
                 'receiver': receiver.id,
                 'message_id': created_message.id,
@@ -88,7 +100,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             pass
 
     async def chat_message(self, event):
-        message = event['message']
+        message = event['text_content']
         sender = event['sender']
         receiver = event['receiver']
         message_id = event.get('message_id')
@@ -97,7 +109,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
          date_time = date_time.isoformat() 
         
         await self.send(text_data=json.dumps({
-            'message': message,
+            'type':'text_message',
+            'text_content': message,
+            'audio_file':'',
             'sender': sender,
             'receiver': receiver,
             'message_id': message_id,
@@ -111,6 +125,63 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'action': 'delete',
             'message_id': message_id
         }))
+     
+
+
+
+    async def handle_audio_message(self, data):
+        data = json.loads(data)
+        base64_audio = data['message']
+        sender_id = data['sender_id']
+        receiver_id = data['receiver_id']
+
+        
+
+
+        # Save the audio file and create a message record
+        sender = await sync_to_async(User.objects.get)(id=sender_id)
+        receiver = await sync_to_async(User.objects.get)(id=receiver_id)
+
+
+        empty_message = await sync_to_async(Message.objects.create)(
+            sender=sender,
+            receiver=receiver,
+            message_type='audio'
+        )
+
+        message_id = empty_message.id
+
+        
+        file_name = f'{message_id}.wav'
+        audio_file = base64.b64decode(base64_audio)
+        file = ContentFile(audio_file, file_name)
+        empty_message.audio_file = file
+        await sync_to_async(empty_message.save)()
+        
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'audio_message',
+                'audio_file': empty_message.audio_file.url,
+                'text_content':'',
+                'sender': sender_id,
+                'receiver': receiver_id,
+                'message_id': message_id,
+                'date_time': empty_message.date_time.isoformat()
+            }
+        )
+    async def audio_message(self, event):
+        # Send the audio message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'audio_message',
+            'audio_file': event['audio_file'],
+            'text_content':'',
+            'sender': event['sender'],
+            'receiver': event['receiver'],
+            'message_id': event['message_id'],
+            'date_time': event['date_time']
+        }))        
+
 
     @sync_to_async
     def room_exists(self, room_name):
@@ -130,9 +201,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
                 return  {'exist':exist,'value':new_name}
                  
             else:
-                print('hhhhhhhhhhhhhhhhhhhhhhhhhhh')
+                
                 return  {'exist':False,'value':''}
-
+    
     @database_sync_to_async
     def delete_message(self, message_id):
         message = Message.objects.get(id=message_id)

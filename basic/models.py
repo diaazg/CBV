@@ -30,9 +30,15 @@ class Profile(models.Model):
 
 
 class Message(models.Model):
+    MESSAGE_TYPES = (
+        ('text', 'Text'),
+        ('audio', 'Audio'),
+    )
     sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
-    content = models.TextField()
+    text_content = models.TextField(null=True, blank=True)
+    audio_file = models.FileField(upload_to='audio_messages/', null=True, blank=True)
+    message_type = models.CharField(max_length=5, choices=MESSAGE_TYPES,default='text')
     is_seen = models.BooleanField(default=False)
     date_time = models.DateTimeField(auto_now_add=True)
 
