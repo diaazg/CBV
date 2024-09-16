@@ -1,11 +1,14 @@
 from django.views import View
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpResponse
 from .forms import *
 from .services import *
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.conf import settings
+import os
+from urllib.parse import quote
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -196,7 +199,26 @@ class MessageView(View):
         
         try:
 
-            data = json.loads(request.body.decode('utf-8'))
+          data = json.loads(request.body.decode('utf-8'))
+          audio = data.get('audio')
+          if not(audio is None):
+              
+              audio_file = data.get('audio_file')
+              if audio_file.startswith('/'):
+                audio_file = audio_file[1:]
+              if audio_file.startswith('media/'):
+                audio_file = audio_file[6:]
+              file_path =os.path.join(settings.MEDIA_ROOT, audio_file)
+              print(file_path)
+              if not os.path.exists(file_path):
+                return JsonResponse({'error': 'File not found'}, status=404)
+              with open(file_path, 'rb') as f:
+                    audio_data = f.read()
+
+              response = HttpResponse(audio_data, content_type='audio/wav')
+              response['Content-Disposition'] =  f'attachment; filename="{quote(os.path.basename(audio_file))}"'
+              return response
+          else:
             sender_id = data.get('sender_id')
             receiver_id = data.get('receiver_id')
             min_date_time = data.get('min_date_time')
@@ -219,14 +241,18 @@ class MessageView(View):
                 'message_id':message.id,
                 'sender': message.sender_id,
                 'receiver':message.receiver_id,
-                'message': message.content,
+                'type':message.message_type,
+                'audio_file':message.audio_file.url if message.audio_file else '',
+                'text_content':message.text_content
             
              } for message in messages]
+            print(messages_data)
             
             return JsonResponse({'messages': messages_data}, status=200)
         
         
         except Exception as e: 
+           print(e)
            return JsonResponse({'error': f"An unexpected error occurred: {str(e)}"}, status=500) 
 
    
