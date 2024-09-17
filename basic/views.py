@@ -246,7 +246,7 @@ class MessageView(View):
                 'text_content':message.text_content
             
              } for message in messages]
-            print(messages_data)
+           
             
             return JsonResponse({'messages': messages_data}, status=200)
         

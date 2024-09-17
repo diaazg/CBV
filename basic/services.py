@@ -154,7 +154,7 @@ def get_user_friends(uid):
         
         user = User.objects.get(id=uid)
         
-        friends = Friend.objects.filter(Q(receiver=user)|Q(sender=user)).order_by('accept_time')
+        friends = Friend.objects.filter(Q(receiver=user)|Q(sender=user)).order_by('-last_connection')
         
         friends_list = []
         for friend in friends:
@@ -188,13 +188,18 @@ def get_peoples(uid):
         invitations = Invitation.objects.filter(Q(sender_id=uid) | Q(receiver_id=uid))
         friend_ids = friends.values_list('sender_id', 'receiver_id')
         invitation_ids = invitations.values_list('sender_id', 'receiver_id')
+        
+        int_list = [int(uid)]
         excluded_ids = set(
+                            
+                             list(int_list) +
                             list(friend_ids.values_list('sender_id',flat=True)) +
                             list(friend_ids.values_list('receiver_id',flat=True)) + 
                             list(invitation_ids.values_list("sender_id",flat=True)) +
                             list(invitation_ids.values_list("receiver_id",flat=True))
                             )
-        print(excluded_ids)
+      
+        
 
         peoples = User.objects.exclude(id__in=excluded_ids)
         
@@ -254,3 +259,12 @@ def get_chat_messages(sender_id,receiver_id,get_new):
       except Exception as e:
            return e
 
+def update_friendship_connection(sender,receiver):
+    friendship = Friend.objects.get(
+        Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        )
+    friendship.last_connection = timezone.now()
+    friendship.save()
+
+    
+    

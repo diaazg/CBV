@@ -10,6 +10,7 @@ from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 import base64
 from django.core.files.base import ContentFile
+from .services import *
 
 class DirectChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -70,6 +71,17 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             text_content=text_content,
             message_type=message_type
         )
+        
+       
+
+        ## update last connection
+        
+        friendship = await sync_to_async(Friend.objects.get)(
+            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        )
+        friendship.last_connection =  timezone.now()
+        await sync_to_async(friendship.save)()
+        
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -109,7 +121,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
          date_time = date_time.isoformat() 
         
         await self.send(text_data=json.dumps({
-            'type':'text_message',
+            'type':'text',
             'text_content': message,
             'audio_file':'',
             'sender': sender,
@@ -149,6 +161,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             message_type='audio'
         )
 
+
+
+
         message_id = empty_message.id
 
         
@@ -157,6 +172,19 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         file = ContentFile(audio_file, file_name)
         empty_message.audio_file = file
         await sync_to_async(empty_message.save)()
+
+        
+        ## update last connection
+
+        friendship = await sync_to_async(Friend.objects.get)(
+            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        )
+        friendship.last_connection =  timezone.now()
+        await sync_to_async(friendship.save)()
+
+
+
+
         
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -173,7 +201,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
     async def audio_message(self, event):
         # Send the audio message to WebSocket
         await self.send(text_data=json.dumps({
-            'type': 'audio_message',
+            'type': 'audio',
             'audio_file': event['audio_file'],
             'text_content':'',
             'sender': event['sender'],

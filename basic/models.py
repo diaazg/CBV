@@ -63,6 +63,7 @@ class Friend(models.Model):
     sender = models.ForeignKey(User, related_name='sender_friend', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='receiver_friend', on_delete=models.CASCADE)
     accept_time = models.DateTimeField(auto_now_add=True)
+    last_connection = models.DateTimeField(auto_now_add=True)
     class Meta:
         unique_together = ('sender', 'receiver')
 
