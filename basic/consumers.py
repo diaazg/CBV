@@ -48,7 +48,10 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             await self.handle_send_message(text_data_json)
         elif action == 'delete':
             await self.handle_delete_message(text_data_json)
- 
+
+        elif action == 'start_call':
+            await self.handle_start_video_call(text_data_json) 
+
         else:
           await self.handle_audio_message(text_data)
 
@@ -209,6 +212,48 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'message_id': event['message_id'],
             'date_time': event['date_time']
         }))        
+
+
+    
+    async def handle_start_video_call(self,text_data_json):
+        sender_id = text_data_json['sender_id']
+        receiver_id = text_data_json['receiver_id']
+
+        sender_token = await self.generate_twilio_token(sender_id, self.room_name)
+        await self.channel_layer.group_send(
+        self.room_group_name,
+        {
+            'type': 'video_call_invite',
+            'sender': sender_id,
+            'receiver': receiver_id,
+            'twilio_token': sender_token,
+            'room_name': self.room_name
+        }
+    )
+        
+    async def video_call_invite(self, event):
+     sender = event['sender']
+     receiver = event['receiver']
+     twilio_token = event['twilio_token']
+     room_name = event['room_name']
+
+     await self.send(text_data=json.dumps({
+        'action': 'start_video_call',
+        'sender': sender,
+        'receiver': receiver,
+        'twilio_token': twilio_token,
+        'room_name': room_name
+    }))        
+   
+
+
+
+
+    @sync_to_async
+    def generate_twilio_token(self, user_id, room_name):
+   
+         user = User.objects.get(id=user_id)
+         return generate_twilio_token(user.username, room_name)
 
 
     @sync_to_async

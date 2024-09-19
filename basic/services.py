@@ -8,6 +8,8 @@ from .models import *
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
+from twilio.jwt.access_token import AccessToken
+from twilio.jwt.access_token.grants import VideoGrant
 
 def create_user(data):
     try:
@@ -162,12 +164,15 @@ def get_user_friends(uid):
                  my_friend = friend.receiver
              else:  
                  my_friend = friend.sender
+             my_friend_info = UserInfo.objects.get(user=my_friend)  
+             phone_nbr = str(my_friend_info.phone_number)
              obj = {
                  'friend_id': my_friend.id,
                  'friend_name':my_friend.username,
-                 'accept_time': friend.accept_time,
+                 'phone_nbr': phone_nbr,
 
              }
+             print(obj)
              friends_list.append(obj)
            
         
@@ -266,5 +271,15 @@ def update_friendship_connection(sender,receiver):
     friendship.last_connection = timezone.now()
     friendship.save()
 
+def generate_twilio_token(identity, room_name):
+    account_sid = 'AC8573035b1a638cdbd528d72a7a0c5a84'
+    api_key_sid = 'SKb2ec2f1abc2e45474604613d3134244a'
+    api_key_secret = 'k9Dhc5BPgPIP9fCenWkT2vzBIX9aSC4I'  
+
+    token = AccessToken(account_sid, api_key_sid, api_key_secret, identity=identity)  
+
+    video_grant = VideoGrant(room=room_name)
+    token.add_grant(video_grant)
     
+    return token.to_jwt().decode('utf-8')        
     
