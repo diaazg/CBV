@@ -10,6 +10,7 @@ from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 import base64
 from django.core.files.base import ContentFile
+from .services import *
 
 class DirectChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -47,7 +48,10 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             await self.handle_send_message(text_data_json)
         elif action == 'delete':
             await self.handle_delete_message(text_data_json)
- 
+
+        elif action == 'start_call':
+            await self.handle_start_video_call(text_data_json) 
+
         else:
           await self.handle_audio_message(text_data)
 
@@ -70,6 +74,17 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             text_content=text_content,
             message_type=message_type
         )
+        
+       
+
+        ## update last connection
+        
+        friendship = await sync_to_async(Friend.objects.get)(
+            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        )
+        friendship.last_connection =  timezone.now()
+        await sync_to_async(friendship.save)()
+        
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -109,7 +124,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
          date_time = date_time.isoformat() 
         
         await self.send(text_data=json.dumps({
-            'type':'text_message',
+            'type':'text',
             'text_content': message,
             'audio_file':'',
             'sender': sender,
@@ -149,6 +164,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             message_type='audio'
         )
 
+
+
+
         message_id = empty_message.id
 
         
@@ -157,6 +175,19 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         file = ContentFile(audio_file, file_name)
         empty_message.audio_file = file
         await sync_to_async(empty_message.save)()
+
+        
+        ## update last connection
+
+        friendship = await sync_to_async(Friend.objects.get)(
+            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        )
+        friendship.last_connection =  timezone.now()
+        await sync_to_async(friendship.save)()
+
+
+
+
         
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -173,7 +204,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
     async def audio_message(self, event):
         # Send the audio message to WebSocket
         await self.send(text_data=json.dumps({
-            'type': 'audio_message',
+            'type': 'audio',
             'audio_file': event['audio_file'],
             'text_content':'',
             'sender': event['sender'],
@@ -181,6 +212,48 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'message_id': event['message_id'],
             'date_time': event['date_time']
         }))        
+
+
+    
+    async def handle_start_video_call(self,text_data_json):
+        sender_id = text_data_json['sender_id']
+        receiver_id = text_data_json['receiver_id']
+
+        sender_token = await self.generate_twilio_token(sender_id, self.room_name)
+        await self.channel_layer.group_send(
+        self.room_group_name,
+        {
+            'type': 'video_call_invite',
+            'sender': sender_id,
+            'receiver': receiver_id,
+            'twilio_token': sender_token,
+            'room_name': self.room_name
+        }
+    )
+        
+    async def video_call_invite(self, event):
+     sender = event['sender']
+     receiver = event['receiver']
+     twilio_token = event['twilio_token']
+     room_name = event['room_name']
+
+     await self.send(text_data=json.dumps({
+        'action': 'start_video_call',
+        'sender': sender,
+        'receiver': receiver,
+        'twilio_token': twilio_token,
+        'room_name': room_name
+    }))        
+   
+
+
+
+
+    @sync_to_async
+    def generate_twilio_token(self, user_id, room_name):
+   
+         user = User.objects.get(id=user_id)
+         return generate_twilio_token(user.username, room_name)
 
 
     @sync_to_async
