@@ -271,6 +271,10 @@ def update_friendship_connection(sender,receiver):
     friendship.last_connection = timezone.now()
     friendship.save()
 
+
+
+
+
 def generate_twilio_token(identity, room_name):
     account_sid = 'AC8573035b1a638cdbd528d72a7a0c5a84'
     api_key_sid = 'SKb2ec2f1abc2e45474604613d3134244a'
@@ -283,3 +287,4 @@ def generate_twilio_token(identity, room_name):
     
     return token.to_jwt().decode('utf-8')        
     
+

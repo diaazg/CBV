@@ -85,6 +85,16 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         friendship.last_connection =  timezone.now()
         await sync_to_async(friendship.save)()
         
+        ## update user state 
+
+        user_info = await sync_to_async(UserInfo.objects.get)(user=sender)
+        user_info.last_date_connected = timezone.now()
+        user_state = user_info.last_date_connected
+        await sync_to_async(user_info.save)()
+
+
+
+        
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -95,7 +105,8 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
                 'sender': sender.id,
                 'receiver': receiver.id,
                 'message_id': created_message.id,
-                'date_time': created_message.date_time
+                'date_time': created_message.date_time,
+                'user_state':user_state
             }
         )
 
@@ -115,6 +126,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             pass
 
     async def chat_message(self, event):
+        state = event['user_state']
         message = event['text_content']
         sender = event['sender']
         receiver = event['receiver']
@@ -122,6 +134,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         date_time = event['date_time']
         if isinstance(date_time, datetime):
          date_time = date_time.isoformat() 
+        if isinstance(state, datetime):
+         state = state.isoformat() 
+
         
         await self.send(text_data=json.dumps({
             'type':'text',
@@ -130,7 +145,8 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'receiver': receiver,
             'message_id': message_id,
-            'date_time':date_time
+            'date_time':date_time,
+            'user_state':state
         }))
 
     async def chat_message_deleted(self, event):

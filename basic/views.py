@@ -37,7 +37,6 @@ class RegisterView(View):
             
         return JsonResponse({'errors': form.errors}, status=400)
 
-
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(View):
     def post(self, request, *args, **kwargs):
@@ -209,7 +208,7 @@ class MessageView(View):
               if audio_file.startswith('media/'):
                 audio_file = audio_file[6:]
               file_path =os.path.join(settings.MEDIA_ROOT, audio_file)
-              print(file_path)
+              
               if not os.path.exists(file_path):
                 return JsonResponse({'error': 'File not found'}, status=404)
               with open(file_path, 'rb') as f:
@@ -246,9 +245,14 @@ class MessageView(View):
                 'text_content':message.text_content
             
              } for message in messages]
-           
             
-            return JsonResponse({'messages': messages_data}, status=200)
+            print(receiver_id)
+            receiver = User.objects.get(id=receiver_id)
+            user_info = UserInfo.objects.get(user=receiver)
+            last_connected = user_info.last_date_connected.isoformat()
+            print(last_connected)
+            
+            return JsonResponse({'messages': messages_data,'user_state':last_connected}, status=200)
         
         
         except Exception as e: 
