@@ -11,6 +11,8 @@ from django.core.exceptions import ObjectDoesNotExist
 import base64
 from django.core.files.base import ContentFile
 from .services import *
+from django.conf import settings
+
 
 class DirectChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -52,9 +54,13 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         elif action == 'start_call':
             await self.handle_start_video_call(text_data_json) 
 
+        elif action=='image':
+            await self.handle_send_image(text_data)
+
         else:
           await self.handle_audio_message(text_data)
 
+## Text message
 
     async def handle_send_message(self, text_data_json):
         
@@ -158,6 +164,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         }))
      
 
+## Audio message
 
 
     async def handle_audio_message(self, data):
@@ -217,6 +224,8 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
                 'date_time': empty_message.date_time.isoformat()
             }
         )
+  
+  
     async def audio_message(self, event):
         # Send the audio message to WebSocket
         await self.send(text_data=json.dumps({
@@ -228,6 +237,46 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'message_id': event['message_id'],
             'date_time': event['date_time']
         }))        
+
+
+## Image message
+
+    async def handle_send_image(self,data):
+        
+        data = json.loads(data)
+        base64_image = data['message']
+        sender_id = data['sender_id']
+        receiver_id = data['receiver_id']
+        
+        sender = await sync_to_async(User.objects.get)(id=sender_id)
+        receiver = await sync_to_async(User.objects.get)(id=receiver_id)
+
+        empty_message = await sync_to_async(Message.objects.create)(
+            sender=sender,
+            receiver=receiver,
+            message_type='image'
+        )
+
+        message_id = empty_message.id
+
+        file_name = f'{message_id}.jpg'
+        image_file = base64.b64decode(base64_image)
+        file = ContentFile(image_file, file_name)
+        empty_message.image_file = file
+        await sync_to_async(empty_message.save)()
+
+        image_url = f"{settings.MEDIA_URL}{image_messages.image.name}"
+
+
+
+
+
+
+
+
+
+
+## Video message
 
 
     
