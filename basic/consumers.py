@@ -265,7 +265,9 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         empty_message.image_file = file
         await sync_to_async(empty_message.save)()
 
-        image_url = f"{settings.MEDIA_URL}{image_messages.image.name}"
+        image_url = f"{settings.MEDIA_URL}{ empty_message.image_file}"
+
+        
 
 
 
