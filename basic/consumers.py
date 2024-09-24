@@ -200,7 +200,15 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         )
         friendship.last_connection =  timezone.now()
         await sync_to_async(friendship.save)()
+        
+                ## update user state 
 
+        user_info = await sync_to_async(UserInfo.objects.get)(user=sender)
+        user_info.last_date_connected = timezone.now()
+        user_state = user_info.last_date_connected
+        await sync_to_async(user_info.save)()
+        
+        
 
 
 
@@ -214,11 +222,13 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
                 'sender': sender_id,
                 'receiver': receiver_id,
                 'message_id': message_id,
-                'date_time': empty_message.date_time.isoformat()
+                'date_time': empty_message.date_time.isoformat(),
+                'user_state':user_state.isoformat()
             }
         )
     async def audio_message(self, event):
         # Send the audio message to WebSocket
+        
         await self.send(text_data=json.dumps({
             'type': 'audio',
             'audio_file': event['audio_file'],
@@ -226,7 +236,8 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'sender': event['sender'],
             'receiver': event['receiver'],
             'message_id': event['message_id'],
-            'date_time': event['date_time']
+            'date_time': event['date_time'],
+            'user_state':event['user_state']
         }))        
 
 
