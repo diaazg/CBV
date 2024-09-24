@@ -108,6 +108,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'text_content': created_message.text_content,
                 'audio_file':'',
+                'image_file':'',
                 'sender': sender.id,
                 'receiver': receiver.id,
                 'message_id': created_message.id,
@@ -148,6 +149,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'type':'text',
             'text_content': message,
             'audio_file':'',
+            'image_file':'',
             'sender': sender,
             'receiver': receiver,
             'message_id': message_id,
@@ -225,6 +227,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'audio_message',
                 'audio_file': empty_message.audio_file.url,
+                'image_file':'',
                 'text_content':'',
                 'sender': sender_id,
                 'receiver': receiver_id,
@@ -242,6 +245,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
             'type': 'audio',
             'audio_file': event['audio_file'],
             'text_content':'',
+            'image_file':'',
             'sender': event['sender'],
             'receiver': event['receiver'],
             'message_id': event['message_id'],
@@ -276,10 +280,55 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         empty_message.image_file = file
         await sync_to_async(empty_message.save)()
 
-        image_url = f"{settings.MEDIA_URL}{ empty_message.image_file}"
-
+        image_url = f"{settings.MEDIA_URL}{empty_message.image_file}"
         
 
+        ## update last connection
+
+        friendship = await sync_to_async(Friend.objects.get)(
+            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        )
+        friendship.last_connection =  timezone.now()
+        await sync_to_async(friendship.save)()
+        
+        ## update user state 
+
+        user_info = await sync_to_async(UserInfo.objects.get)(user=sender)
+        user_info.last_date_connected = timezone.now()
+        user_state = user_info.last_date_connected
+        await sync_to_async(user_info.save)()
+
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'image_message',
+                'audio_file': '',
+                'text_content':'',
+                'image_file':image_url,
+                'sender': sender_id,
+                'receiver': receiver_id,
+                'message_id': message_id,
+                'date_time': empty_message.date_time.isoformat(),
+                'user_state':user_state.isoformat()
+            }
+        )
+        
+
+    async def image_message(self,event):
+
+
+        await self.send(text_data=json.dumps({
+            'type': 'audio',
+            'audio_file': '',
+            'text_content':'',
+            'image_file':event['image_file'],
+            'sender': event['sender'],
+            'receiver': event['receiver'],
+            'message_id': event['message_id'],
+            'date_time': event['date_time'],
+            'user_state':event['user_state']
+        })) 
 
 
 
