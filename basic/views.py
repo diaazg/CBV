@@ -242,6 +242,7 @@ class MessageView(View):
                 'receiver':message.receiver_id,
                 'type':message.message_type,
                 'audio_file':message.audio_file.url if message.audio_file else '',
+                'image_file':message.image_file.url if message.image_file else '',
                 'text_content':message.text_content
             
              } for message in messages]
