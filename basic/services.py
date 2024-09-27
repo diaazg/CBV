@@ -166,13 +166,15 @@ def get_user_friends(uid):
                  my_friend = friend.sender
              my_friend_info = UserInfo.objects.get(user=my_friend)  
              phone_nbr = str(my_friend_info.phone_number)
+             last_connected = my_friend_info.last_date_connected.isoformat()
              obj = {
                  'friend_id': my_friend.id,
                  'friend_name':my_friend.username,
                  'phone_nbr': phone_nbr,
+                 'last_connected':last_connected
 
              }
-             print(obj)
+             
              friends_list.append(obj)
            
         
