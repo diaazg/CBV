@@ -263,8 +263,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
         sender_id = data['sender_id']
         receiver_id = data['receiver_id']
 
-        print(base64_image)
-        print("i---------------------------------")
+
         
         sender = await sync_to_async(User.objects.get)(id=sender_id)
         receiver = await sync_to_async(User.objects.get)(id=receiver_id)
@@ -322,7 +321,7 @@ class DirectChatConsumer(AsyncWebsocketConsumer):
 
 
         await self.send(text_data=json.dumps({
-            'type': 'audio',
+            'type': 'image',
             'audio_file': '',
             'text_content':'',
             'image_file':event['image_file'],
